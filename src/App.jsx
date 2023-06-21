@@ -6,6 +6,15 @@ import productsFromServer from './api/products';
 
 export const App = () => {
   const [selectedUser, setSelectedUser] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
+
+  const handleSearchChange = (event) => {
+    setSearchValue(event.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchValue('');
+  };
 
   const products = productsFromServer.map((product) => {
     const category = categoriesFromServer.find(
@@ -21,9 +30,22 @@ export const App = () => {
     };
   });
 
-  const filteredProducts = selectedUser
-    ? products.filter(product => product.user.id === selectedUser)
-    : products;
+  const filteredProducts = products.filter((product) => {
+    const matchesUser = selectedUser
+      ? product.user.id === selectedUser
+      : true;
+
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(searchValue.toLowerCase());
+
+    return matchesUser && matchesSearch;
+  });
+
+  const handleResetAllFilters = () => {
+    setSelectedUser(null);
+    setSearchValue('');
+  };
 
   return (
     <div className="section">
@@ -40,8 +62,7 @@ export const App = () => {
                 href="#/"
                 className={selectedUser === null
                   ? 'is-active'
-                  : ''
-                }
+                  : ''}
                 onClick={() => setSelectedUser(null)}
               >
                 All
@@ -52,7 +73,9 @@ export const App = () => {
                   key={user.id}
                   data-cy="FilterUser"
                   href="#/"
-                  className={selectedUser === user.id ? 'is-active' : ''}
+                  className={selectedUser === user.id
+                    ? 'is-active'
+                    : ''}
                   onClick={() => setSelectedUser(user.id)}
                 >
                   {user.name}
@@ -67,20 +90,24 @@ export const App = () => {
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={searchValue}
+                  onChange={handleSearchChange}
                 />
 
                 <span className="icon is-left">
                   <i className="fas fa-search" aria-hidden="true" />
                 </span>
 
-                <span className="icon is-right">
-                  <button
-                    data-cy="ClearButton"
-                    type="button"
-                    className="delete"
-                  />
-                </span>
+                {searchValue && (
+                  <span className="icon is-right">
+                    <button
+                      data-cy="ClearButton"
+                      type="button"
+                      className="delete"
+                      onClick={handleClearSearch}
+                    />
+                  </span>
+                )}
               </p>
             </div>
 
@@ -101,20 +128,23 @@ export const App = () => {
                   href="#/"
                 >
                   {category.icon}
+                  {' '}
                   -
+                  {' '}
                   {category.title}
                 </a>
               ))}
             </div>
 
             <div className="panel-block">
-              <a
+              <button
                 data-cy="ResetAllButton"
-                href="#/"
+                type="button"
                 className="button is-link is-outlined is-fullwidth"
+                onClick={handleResetAllFilters}
               >
                 Reset all filters
-              </a>
+              </button>
             </div>
           </nav>
         </div>
@@ -179,18 +209,23 @@ export const App = () => {
                     <td className="has-text-weight-bold" data-cy="ProductId">
                       {product.id}
                     </td>
-                    <td data-cy="ProductName">{product.name}</td>
+
+                    <td data-cy="ProductName">
+                      {product.name}
+                    </td>
+
                     <td data-cy="ProductCategory">
                       {product.category.icon}
+                      {' '}
                       -
+                      {' '}
                       {product.category.title}
                     </td>
+
                     <td
                       data-cy="ProductUser"
                       className={`has-text-${
-                        product.user.sex === 'm'
-                          ? 'link'
-                          : 'danger'
+                        product.user.sex === 'm' ? 'link' : 'danger'
                       }`}
                     >
                       {product.user.name}
