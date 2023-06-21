@@ -1,15 +1,17 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+import React, { useState } from 'react';
 import './App.scss';
 import usersFromServer from './api/users';
 import categoriesFromServer from './api/categories';
 import productsFromServer from './api/products';
 
 export const App = () => {
+  const [selectedUser, setSelectedUser] = useState(null);
+
   const products = productsFromServer.map((product) => {
     const category = categoriesFromServer.find(
       singleCategory => singleCategory.id === product.categoryId,
     );
+
     const user = usersFromServer.find(person => person.id === category.ownerId);
 
     return {
@@ -18,6 +20,10 @@ export const App = () => {
       user,
     };
   });
+
+  const filteredProducts = selectedUser
+    ? products.filter(product => product.user.id === selectedUser)
+    : products;
 
   return (
     <div className="section">
@@ -29,21 +35,29 @@ export const App = () => {
             <p className="panel-heading">Filters</p>
 
             <p className="panel-tabs has-text-weight-bold">
-              <a data-cy="FilterAllUsers" href="#/">
+              <a
+                data-cy="FilterAllUsers"
+                href="#/"
+                className={selectedUser === null
+                  ? 'is-active'
+                  : ''
+                }
+                onClick={() => setSelectedUser(null)}
+              >
                 All
               </a>
 
-              <a data-cy="FilterUser" href="#/">
-                User 1
-              </a>
-
-              <a data-cy="FilterUser" href="#/" className="is-active">
-                User 2
-              </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 3
-              </a>
+              {usersFromServer.map(user => (
+                <a
+                  key={user.id}
+                  data-cy="FilterUser"
+                  href="#/"
+                  className={selectedUser === user.id ? 'is-active' : ''}
+                  onClick={() => setSelectedUser(user.id)}
+                >
+                  {user.name}
+                </a>
+              ))}
             </p>
 
             <div className="panel-block">
@@ -106,7 +120,7 @@ export const App = () => {
         </div>
 
         <div className="box table-container">
-          {products.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <p data-cy="NoMatchingMessage">
               No products matching selected criteria
             </p>
@@ -130,12 +144,9 @@ export const App = () => {
                   <th>
                     <span className="is-flex is-flex-wrap-nowrap">
                       Product
-                      <a href="#">
+                      <a href="#/">
                         <span className="icon">
-                          <i
-                            data-cy="SortIcon"
-                            className="fas fa-sort-down"
-                          />
+                          <i data-cy="SortIcon" className="fas fa-sort-down" />
                         </span>
                       </a>
                     </span>
@@ -145,10 +156,7 @@ export const App = () => {
                       Category
                       <a href="#/">
                         <span className="icon">
-                          <i
-                            data-cy="SortIcon"
-                            className="fas fa-sort-up"
-                          />
+                          <i data-cy="SortIcon" className="fas fa-sort-up" />
                         </span>
                       </a>
                     </span>
@@ -166,7 +174,7 @@ export const App = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map(product => (
+                {filteredProducts.map(product => (
                   <tr data-cy="Product" key={product.id}>
                     <td className="has-text-weight-bold" data-cy="ProductId">
                       {product.id}
@@ -180,7 +188,9 @@ export const App = () => {
                     <td
                       data-cy="ProductUser"
                       className={`has-text-${
-                        product.user.sex === 'm' ? 'link' : 'danger'
+                        product.user.sex === 'm'
+                          ? 'link'
+                          : 'danger'
                       }`}
                     >
                       {product.user.name}
